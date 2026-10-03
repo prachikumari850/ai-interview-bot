@@ -1,25 +1,9 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import ScoreBar from '../components/ScoreBar.jsx'
+import { getReport } from '../services/api.js'
 
-const sample = {
-  candidate: 'Candidate Name',
-  field: 'AI/ML · Fresher',
-  duration: '14:32',
-  questionCount: 3,
-  overall: 78,
-  technical: [['Correctness', 80], ['Relevance', 85], ['Depth', 70], ['Problem solving', 74]],
-  communication: [['Clarity', 82], ['Structure', 76]],
-  knowledge: [['Resume knowledge', 84], ['Project knowledge', 79]],
-  speech: [['Speaking rate', '132 wpm'], ['Filler words', '6 per min'], ['Average pause', '1.2 s'], ['Response time', '3.4 s']],
-  visual: [['Face visibility', '96%'], ['Camera-facing ratio', '81%'], ['Head movement', '12 per min']],
-  strengths: ['Clear explanation of project architecture', 'Relevant, on-topic answers', 'Good awareness of trade-offs'],
-  improvements: ['Go deeper on model evaluation metrics', 'Reduce filler words', 'Structure answers with a clear beginning and end'],
-  questions: [
-    { q: 'Tell me about yourself.', score: 82, feedback: 'Well structured and concise. Mention your main strength earlier.' },
-    { q: 'Why did you choose YOLO for your project?', score: 76, feedback: 'Correct reasoning on speed. Missing a comparison with alternatives.' },
-    { q: 'Explain overfitting and how you prevent it.', score: 70, feedback: 'Correct definition. Add concrete techniques such as dropout and early stopping.' },
-  ],
-}
+const formatDuration = (seconds) => `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`
 
 function Card({ title, badge, children }) {
   const measured = badge === 'Measured'
@@ -36,42 +20,73 @@ function Card({ title, badge, children }) {
   )
 }
 
-const Scores = ({ items }) => (
-  <div className="space-y-4">{items.map(([label, value]) => <ScoreBar key={label} label={label} value={value} />)}</div>
-)
+const Empty = ({ text }) => <p className="text-sm text-slate-500">{text}</p>
 
-const Metrics = ({ items }) => (
-  <dl className="grid grid-cols-2 gap-4">
-    {items.map(([label, value]) => (
-      <div key={label} className="rounded-xl bg-slate-50 p-4">
-        <dt className="text-xs text-slate-500">{label}</dt>
-        <dd className="mt-1 text-lg font-semibold">{value}</dd>
-      </div>
-    ))}
-  </dl>
-)
+const Scores = ({ items }) =>
+  items.length ? (
+    <div className="space-y-4">{items.map(([label, value]) => <ScoreBar key={label} label={label} value={value} />)}</div>
+  ) : (
+    <Empty text="Not enough answers in this category to score." />
+  )
 
-const Bullets = ({ items }) => (
-  <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">{items.map((item) => <li key={item}>{item}</li>)}</ul>
-)
+const Metrics = ({ items, empty }) =>
+  items.length ? (
+    <dl className="grid grid-cols-2 gap-4">
+      {items.map(([label, value]) => (
+        <div key={label} className="rounded-xl bg-slate-50 p-4">
+          <dt className="text-xs text-slate-500">{label}</dt>
+          <dd className="mt-1 text-lg font-semibold">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  ) : (
+    <Empty text={empty} />
+  )
+
+const Bullets = ({ items }) =>
+  items.length ? (
+    <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">{items.map((item) => <li key={item}>{item}</li>)}</ul>
+  ) : (
+    <Empty text="Nothing to show." />
+  )
 
 export default function Report() {
-  const r = sample
+  const { sessionId } = useParams()
+  const [report, setReport] = useState(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    getReport(sessionId).then(setReport).catch((err) => setError(err.message))
+  }, [sessionId])
+
+  if (!report) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-slate-50 px-6 text-center">
+        <div>
+          <p className={error ? 'text-red-600' : 'text-slate-600'}>{error || 'Loading your report…'}</p>
+          {error && <Link to="/setup" className="mt-4 inline-block text-brand-600 underline">Start a new interview</Link>}
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 pb-16">
       <header className="bg-navy-900 px-6 py-12 text-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-8">
           <div>
             <p className="text-sm text-brand-400">Interview report</p>
-            <h1 className="mt-1 text-3xl font-semibold">{r.candidate}</h1>
-            <p className="mt-2 text-slate-400">{r.field} · {r.duration} · {r.questionCount} questions</p>
+            <h1 className="mt-1 text-3xl font-semibold">{report.candidate}</h1>
+            <p className="mt-2 text-slate-400">
+              {report.field} · {report.experience} · {report.interview_type} · {formatDuration(report.duration)} · {report.question_count} questions
+            </p>
           </div>
           <div
             className="grid size-36 place-items-center rounded-full"
-            style={{ background: `conic-gradient(#6d5ef0 ${r.overall * 3.6}deg, rgba(255,255,255,0.1) 0)` }}
+            style={{ background: `conic-gradient(#6d5ef0 ${report.overall * 3.6}deg, rgba(255,255,255,0.1) 0)` }}
           >
             <div className="grid size-28 place-items-center rounded-full bg-navy-900 text-center">
-              <span className="text-3xl font-bold">{r.overall}</span>
+              <span className="text-3xl font-bold">{report.overall}</span>
               <span className="-mt-4 text-xs text-slate-400">overall</span>
             </div>
           </div>
@@ -80,28 +95,43 @@ export default function Report() {
 
       <div className="mx-auto mt-8 max-w-6xl space-y-6 px-6">
         <p className="text-sm text-slate-500">
-          <strong>Measured</strong> values are calculated from your session. <strong>AI feedback</strong> is generated by a language model and may be imperfect.
+          <strong>Measured</strong> values are calculated from your session and are not part of the score. <strong>AI feedback</strong> is
+          generated by a language model and may be imperfect. Overall = 70% technical + 30% communication.
         </p>
 
+        <Card title="Summary" badge="AI feedback">
+          <p className="text-sm leading-relaxed text-slate-600">{report.summary}</p>
+        </Card>
+
         <div className="grid gap-6 md:grid-cols-2">
-          <Card title="Technical performance" badge="AI feedback"><Scores items={r.technical} /></Card>
-          <Card title="Communication" badge="AI feedback"><Scores items={r.communication} /></Card>
-          <Card title="Resume and project knowledge" badge="AI feedback"><Scores items={r.knowledge} /></Card>
-          <Card title="Speech metrics" badge="Measured"><Metrics items={r.speech} /></Card>
-          <Card title="Visual observations" badge="Measured"><Metrics items={r.visual} /></Card>
+          <Card title="Technical performance" badge="AI feedback"><Scores items={report.technical} /></Card>
+          <Card title="Communication" badge="AI feedback"><Scores items={report.communication} /></Card>
+          {report.knowledge.length > 0 && (
+            <Card title="Resume and project knowledge" badge="AI feedback"><Scores items={report.knowledge} /></Card>
+          )}
+          <Card title="Speech metrics" badge="Measured"><Metrics items={report.speech} empty="No speech data." /></Card>
+          <Card title="Visual observations (head position, measured in your browser)" badge="Measured">
+            <Metrics items={report.visual} empty="Camera analysis was not available during this interview." />
+          </Card>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card title="Strengths" badge="AI feedback"><Bullets items={r.strengths} /></Card>
-          <Card title="Areas for improvement" badge="AI feedback"><Bullets items={r.improvements} /></Card>
+          <Card title="Strengths" badge="AI feedback"><Bullets items={report.strengths} /></Card>
+          <Card title="Areas for improvement" badge="AI feedback"><Bullets items={report.improvements} /></Card>
         </div>
+
+        <Card title="How to prepare next" badge="AI feedback"><Bullets items={report.recommendations} /></Card>
 
         <Card title="Question analysis" badge="AI feedback">
           <ul className="divide-y divide-slate-100">
-            {r.questions.map((item) => (
-              <li key={item.q} className="flex items-start justify-between gap-6 py-4">
+            {report.questions.map((item, index) => (
+              <li key={index} className="flex items-start justify-between gap-6 py-4">
                 <div>
-                  <p className="font-medium">{item.q}</p>
+                  <p className="text-xs capitalize text-slate-500">
+                    {item.round}{item.kind === 'followup' ? ' · follow-up' : ''}
+                  </p>
+                  <p className="font-medium">{item.question}</p>
+                  <p className="mt-1 text-sm text-slate-500">{item.answer_summary}</p>
                   <p className="mt-1 text-sm text-slate-600">{item.feedback}</p>
                 </div>
                 <span className="rounded-full bg-brand-500/10 px-3 py-1 text-sm font-semibold text-brand-600">{item.score}</span>

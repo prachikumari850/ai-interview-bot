@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
+import { createInterview } from '../services/api.js'
 
 const options = {
   field: ['AI/ML', 'Data Science', 'Web Development', 'Backend', 'Full Stack', 'General'],
@@ -22,6 +23,7 @@ export default function Setup() {
   const navigate = useNavigate()
   const [resume, setResume] = useState(null)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     field: 'AI/ML',
     experience: 'Fresher',
@@ -38,10 +40,18 @@ export default function Setup() {
     setResume(file)
   }
 
-  function start(e) {
+  async function start(e) {
     e.preventDefault()
     if (!resume) return setError('Please upload your resume as a PDF.')
-    navigate('/interview', { state: form })
+    setError('')
+    setLoading(true)
+    try {
+      const data = await createInterview(resume, form)
+      navigate('/interview', { state: { sessionId: data.session_id, seconds: data.seconds, question: data.question } })
+    } catch (err) {
+      setError(err.message)
+      setLoading(false)
+    }
   }
 
   return (
@@ -77,8 +87,11 @@ export default function Setup() {
 
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-          <button className="mt-8 w-full rounded-full bg-linear-to-r from-brand-500 to-accent-500 py-3 font-medium text-white shadow-lg shadow-brand-500/30 transition hover:opacity-90">
-            Start Interview
+          <button
+            disabled={loading}
+            className="mt-8 w-full rounded-full bg-linear-to-r from-brand-500 to-accent-500 py-3 font-medium text-white shadow-lg shadow-brand-500/30 transition hover:opacity-90 disabled:opacity-60"
+          >
+            {loading ? 'Analyzing your resume…' : 'Start Interview'}
           </button>
         </form>
       </main>

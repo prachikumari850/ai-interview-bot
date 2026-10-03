@@ -11,6 +11,7 @@ export default function App() {
       <Route path="/setup" element={<Setup />} />
       <Route path="/interview" element={<Interview />} />
       <Route path="/report" element={<Report />} />
+      <Route path="/report/:sessionId" element={<Report />} />
     </Routes>
   )
 }
