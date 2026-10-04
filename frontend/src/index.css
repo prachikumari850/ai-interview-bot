@@ -20,3 +20,180 @@ body {
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
 }
+
+.fade-up {
+  animation: fade-up 0.7s ease-out both;
+}
+
+.avatar-body {
+  animation: avatar-float 5s ease-in-out infinite;
+}
+
+.avatar-head {
+  transform-origin: 100px 130px;
+}
+
+.avatar-eye,
+.avatar-mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.avatar-eye {
+  animation: avatar-blink 5s infinite;
+}
+
+.avatar-glow {
+  background: radial-gradient(circle, rgb(109 94 240 / 0.35), transparent 65%);
+  animation: avatar-glow 4s ease-in-out infinite;
+}
+
+.avatar-ring {
+  border: 2px solid rgb(139 124 246 / 0.55);
+  opacity: 0;
+}
+
+.avatar-spinner {
+  border: 3px solid transparent;
+  border-top-color: #8b7cf6;
+  border-right-color: #3b82f6;
+  opacity: 0;
+}
+
+.avatar-bars span {
+  opacity: 0.4;
+  transform: scaleY(0.15);
+}
+
+[data-state='speaking'] .avatar-mouth {
+  animation: avatar-talk 0.28s ease-in-out infinite alternate;
+}
+
+[data-state='speaking'] .avatar-head {
+  animation: avatar-nod 2.4s ease-in-out infinite;
+}
+
+[data-state='speaking'] .avatar-glow {
+  animation-duration: 1.4s;
+}
+
+[data-state='speaking'] .avatar-ring {
+  animation: avatar-ring 2s ease-out infinite;
+}
+
+[data-state='speaking'] .avatar-bars span {
+  animation: avatar-bar 0.8s ease-in-out infinite alternate;
+}
+
+[data-state='speaking'] .avatar-bars span:nth-child(even) {
+  animation-duration: 1.05s;
+}
+
+[data-state='listening'] .avatar-ring {
+  border-color: rgb(52 211 153 / 0.55);
+  animation: avatar-ring 2.8s ease-out infinite;
+}
+
+[data-state='processing'] .avatar-spinner {
+  opacity: 1;
+  animation: avatar-spin 1.1s linear infinite;
+}
+
+[data-state='processing'] .avatar-glow {
+  background: radial-gradient(circle, rgb(251 191 36 / 0.22), transparent 65%);
+}
+
+[data-state='completed'] .avatar-glow {
+  background: radial-gradient(circle, rgb(52 211 153 / 0.3), transparent 65%);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes avatar-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes avatar-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes avatar-talk {
+  from {
+    transform: scale(1, 0.5);
+  }
+  to {
+    transform: scale(1.1, 2.4);
+  }
+}
+
+@keyframes avatar-nod {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(1.4deg);
+  }
+  70% {
+    transform: rotate(-1.4deg);
+  }
+}
+
+@keyframes avatar-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes avatar-ring {
+  from {
+    opacity: 0.7;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes avatar-bar {
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

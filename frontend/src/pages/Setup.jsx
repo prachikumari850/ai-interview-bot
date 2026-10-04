@@ -47,7 +47,7 @@ export default function Setup() {
     setLoading(true)
     try {
       const data = await createInterview(resume, form)
-      navigate('/interview', { state: { sessionId: data.session_id, seconds: data.seconds, question: data.question } })
+      navigate('/interview', { state: { sessionId: data.session_id, seconds: data.seconds, question: data.question, type: form.type } })
     } catch (err) {
       setError(err.message)
       setLoading(false)
